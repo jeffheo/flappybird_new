@@ -6,26 +6,21 @@ import numpy as np
 class QNetwork(nn.Module):
 
     def __init__(self, state_size, action_size, hidden_size=(64, 64), use_cnn=False):
-       
         super(QNetwork, self).__init__()
         self.use_cnn = use_cnn
         
         if use_cnn:
-            # CNN for rectangular input (maintaining aspect ratio)
             self.conv1 = nn.Conv2d(state_size[0], 16, kernel_size=8, stride=4)
             self.conv2 = nn.Conv2d(16, 32, kernel_size=4, stride=2)
             self.conv3 = nn.Conv2d(32, 32, kernel_size=3, stride=1)  # Additional conv layer
             
-            # Calculate the size of flattened features
             sample_input = torch.zeros(1, *state_size)
             conv_out = self._forward_conv(sample_input)
             self.feature_size = int(np.prod(conv_out.shape[1:]))
             
-            # Fully connected layers
             self.fc1 = nn.Linear(self.feature_size, 512)
             self.fc2 = nn.Linear(512, action_size)
         else:
-            # Original fully connected network for vector input
             self.fc1 = nn.Linear(state_size, hidden_size[0])
             self.fc2 = nn.Linear(hidden_size[0], hidden_size[1])
             self.fc3 = nn.Linear(hidden_size[1], action_size)
@@ -38,7 +33,6 @@ class QNetwork(nn.Module):
         return x
 
     def forward(self, x):
-        """Build a network that maps state -> action values."""
         if self.use_cnn:
             x = self._forward_conv(x)
             x = x.view(x.size(0), -1)  # Flatten

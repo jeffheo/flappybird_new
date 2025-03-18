@@ -1,9 +1,6 @@
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
 from torchvision.models import resnet18, ResNet18_Weights
-import torch.hub
 
 class SpatialAwareCNN(nn.Module):
     def __init__(self, input_channels=1):
@@ -55,8 +52,7 @@ class ResNetFeatureExtractor(nn.Module):
 
 
 class QNetworkUnified(nn.Module):
-
-    def __init__(self, state_size, action_size, feature_extractor='resnet', hidden_size=(256, 128), freeze_features=True):
+    def __init__(self, state_size, action_size, feature_extractor='resnet', hidden_size=(64,64), freeze_features=True):
        
         super(QNetworkUnified, self).__init__()
         self.feature_extractor_type = feature_extractor
@@ -77,7 +73,6 @@ class QNetworkUnified(nn.Module):
         else:
             raise ValueError(f"Unsupported feature extractor: {feature_extractor}")
         
-        # Q-value network
         self.fc1 = nn.Linear(feature_size, hidden_size[0])
         self.fc2 = nn.Linear(hidden_size[0], hidden_size[1])
         self.fc3 = nn.Linear(hidden_size[1], action_size)

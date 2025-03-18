@@ -3,8 +3,8 @@ class AgentConfig:
         self,
         state_size,
         action_size,
-        seed=1993,
-        nb_hidden=(256, 128),
+        seed=0,
+        nb_hidden=(64, 64),
         learning_rate=0.0003,
         gamma=0.99,
         gae_lambda=0.95,
@@ -14,14 +14,11 @@ class AgentConfig:
         value_coef=0.5,
         entropy_coef=0.01,
         max_grad_norm=0.5,
-        update_interval=2048,
+        update_interval=512,
         model_dir="../models/PPO_RGB.pt",
         feature_extractor="resnet",
         finetune_features=False,
-        use_frame_stack=True,
-        frame_stack_size=4,
-        target_size=(84, 84),
-        preprocess_method="enhanced"
+        target_size=(224, 224),
     ):
         
         self.state_size = state_size
@@ -42,10 +39,7 @@ class AgentConfig:
         
         self.feature_extractor = feature_extractor  # Fixed to ResNet
         self.finetune_features = finetune_features
-        self.use_frame_stack = use_frame_stack
-        self.frame_stack_size = frame_stack_size
         self.target_size = target_size
-        self.preprocess_method = preprocess_method
 
     def dict(self):
         """Return configuration as dictionary."""

@@ -1,18 +1,12 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-import numpy as np
 import argparse
-from glob import glob
-
 
 def generate_plots_from_csv(episodes_csv_path, training_csv_path=None, output_dir=None, 
                            window_size=100, agent_name=None, dpi=300, rewards_only=False):
     
-    # Extract base filename for output
     base_filename = os.path.splitext(os.path.basename(episodes_csv_path))[0].replace("_episodes", "")
-    
-    # If agent_name not provided, extract from filename
     if agent_name is None:
         parts = base_filename.split('_')
         if len(parts) >= 1:
@@ -32,11 +26,9 @@ def generate_plots_from_csv(episodes_csv_path, training_csv_path=None, output_di
         print(f"Error loading episode metrics: {e}")
         return
     
-    # Plot rewards
     plt.figure(figsize=(10, 6))
     plt.plot(episode_df['episode'], episode_df['reward'], alpha=0.3, color='blue', label='Rewards')
     
-    # Plot moving average if available in CSV, otherwise calculate it
     if 'reward_moving_avg' in episode_df.columns:
         plt.plot(episode_df['episode'], episode_df['reward_moving_avg'], color='red', 
                  label=f'Moving Average')
@@ -56,12 +48,10 @@ def generate_plots_from_csv(episodes_csv_path, training_csv_path=None, output_di
     plt.close()
     print(f"Saved rewards plot to {rewards_path}")
     
-    # Plot episode length (only if rewards_only is False)
     if not rewards_only:
         plt.figure(figsize=(10, 6))
         plt.plot(episode_df['episode'], episode_df['episode_length'], alpha=0.3, color='green', label='Episode Length')
         
-        # Plot moving average if available in CSV, otherwise calculate it
         if 'length_moving_avg' in episode_df.columns:
             plt.plot(episode_df['episode'], episode_df['length_moving_avg'], color='orange', 
                      label=f'Moving Average')
@@ -106,7 +96,6 @@ def generate_plots_from_csv(episodes_csv_path, training_csv_path=None, output_di
             plt.close()
             print(f"Saved losses plot to {losses_path}")
         
-        # Plot exploration if available
         if 'exploration' in training_df.columns:
             plt.figure(figsize=(10, 6))
             plt.plot(training_df['update_step'], training_df['exploration'], label='Exploration Rate')
@@ -119,7 +108,6 @@ def generate_plots_from_csv(episodes_csv_path, training_csv_path=None, output_di
             plt.close()
             print(f"Saved exploration plot to {exploration_path}")
         
-        # Plot parameter statistics
         param_columns = [col for col in training_df.columns 
                          if col not in ['update_step'] + loss_columns + ['exploration']]
         
@@ -139,15 +127,6 @@ def generate_plots_from_csv(episodes_csv_path, training_csv_path=None, output_di
             plt.close()
             print(f"Saved parameter statistics plot to {params_path}")
 
-
-def find_matching_training_csv(episodes_csv_path):
-    base_path = episodes_csv_path.replace('_episodes.csv', '')
-    training_path = f"{base_path}_training.csv"
-    if os.path.exists(training_path):
-        return training_path
-    return None
-
-
 def main():
     parser = argparse.ArgumentParser(description='Generate plots from saved metrics CSV files')
     parser.add_argument('--episodes_csv', type=str, help='Path to episodes CSV file')
@@ -162,28 +141,10 @@ def main():
     
     args = parser.parse_args()
     
-    if args.all:
-        episodes_files = glob(os.path.join(args.metrics_dir, '*_episodes.csv'))
-        if not episodes_files:
-            print(f"No episodes CSV files found in {args.metrics_dir}")
-            return
-        
-        for episodes_file in episodes_files:
-            training_file = find_matching_training_csv(episodes_file)
-            generate_plots_from_csv(
-                episodes_csv_path=episodes_file,
-                training_csv_path=training_file,
-                output_dir=args.output_dir,
-                window_size=args.window_size,
-                agent_name=args.agent_name,
-                dpi=args.dpi,
-                rewards_only=args.rewards_only
-            )
-    elif args.episodes_csv:
-        training_csv = args.training_csv or find_matching_training_csv(args.episodes_csv)
+    if args.episodes_csv:
         generate_plots_from_csv(
             episodes_csv_path=args.episodes_csv,
-            training_csv_path=training_csv,
+            training_csv_path=args.training_csv,
             output_dir=args.output_dir,
             window_size=args.window_size,
             agent_name=args.agent_name,

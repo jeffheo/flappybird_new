@@ -1,4 +1,3 @@
-
 class DoubleDQNStateConfig:
     """Configuration for Double DQN agent with state-based observations."""
     
@@ -6,11 +5,10 @@ class DoubleDQNStateConfig:
         self,
         state_size,
         action_size,
-        seed=1993,
+        seed=0,
         nb_hidden=(64, 64),
         learning_rate=0.0005,
         memory_size=100000,
-        prioritized_memory=False,
         batch_size=64,
         gamma=0.99,
         tau=0.001,
@@ -30,7 +28,6 @@ class DoubleDQNStateConfig:
         self.nb_hidden = nb_hidden
         self.learning_rate = learning_rate
         self.memory_size = memory_size
-        self.prioritized_memory = prioritized_memory
         self.batch_size = batch_size
         self.gamma = gamma
         self.tau = tau
@@ -53,7 +50,6 @@ class DoubleDQNStateConfig:
             "nb_hidden": self.nb_hidden,
             "learning_rate": self.learning_rate,
             "memory_size": self.memory_size,
-            "prioritized_memory": self.prioritized_memory,
             "batch_size": self.batch_size,
             "gamma": self.gamma,
             "tau": self.tau,

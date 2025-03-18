@@ -48,7 +48,6 @@ class MetricsTracker:
         self.start_time = time.time()
         self.episode_start_time = None
         
-        # Dataframes for different metric types
         self.episode_metrics_df = None
         self.training_metrics_df = None
     
@@ -89,7 +88,6 @@ class MetricsTracker:
     
     def log_param_stats(self, model, grad_norm=None, update_ratio=None, clipped_updates=None):
         
-        # Calculate gradient norm if not provided
         if grad_norm is None and model is not None:
             grad_norm = 0
             for param in model.parameters():
@@ -100,7 +98,6 @@ class MetricsTracker:
         if grad_norm is not None:
             self.param_stats['grad_norm'].append(grad_norm)
         
-        # Calculate weight norm
         if model is not None:
             weight_norm = 0
             for param in model.parameters():
@@ -108,7 +105,6 @@ class MetricsTracker:
             weight_norm = weight_norm ** 0.5
             self.param_stats['weight_norm'].append(weight_norm)
         
-        # PPO specific metrics
         if update_ratio is not None:
             self.param_stats['update_ratio'].append(update_ratio)
         if clipped_updates is not None:
@@ -159,7 +155,6 @@ class MetricsTracker:
     
     def create_training_dataframe(self):
         
-        # Check if we have any training metrics
         has_training_metrics = (
             any(len(values) > 0 for values in self.losses.values()) or 
             len(self.exploration_values) > 0 or
@@ -169,7 +164,6 @@ class MetricsTracker:
         if not has_training_metrics:
             return None
         
-        # Create base dataframe with update steps
         max_updates = max(
             max([len(values) for values in self.losses.values()] or [0]),
             len(self.exploration_values),
@@ -183,10 +177,8 @@ class MetricsTracker:
             'update_step': list(range(1, max_updates + 1))
         }
         
-        # Add loss metrics
         for loss_type, values in self.losses.items():
             if values:
-                # Pad with NaN if necessary
                 padded_values = values + [np.nan] * (max_updates - len(values))
                 data[f'{loss_type}_loss'] = padded_values
         
@@ -204,7 +196,6 @@ class MetricsTracker:
     
     def save_metrics(self, additional_info=None, generate_plots=False):
         
-        # Create filename base with agent name and timestamp
         filename_base = f"{self.agent_name}_{self.timestamp}"
         if additional_info:
             for key, value in additional_info.items():
@@ -234,12 +225,10 @@ class MetricsTracker:
         if filename_base is None:
             filename_base = f"{self.agent_name}_{self.timestamp}"
         
-        # Create figure for reward plot
         plt.figure(figsize=(12, 8))
         plt.subplot(2, 1, 1)
         plt.plot(self.episode_rewards, alpha=0.3, color='blue', label='Rewards')
         
-        # Plot moving average if enough data
         if len(self.episode_rewards) >= self.window_size:
             moving_avg = np.convolve(self.episode_rewards, 
                                      np.ones(self.window_size)/self.window_size, 
@@ -253,11 +242,9 @@ class MetricsTracker:
         plt.ylabel('Reward')
         plt.legend()
         
-        # Plot episode length
         plt.subplot(2, 1, 2)
         plt.plot(self.episode_lengths, alpha=0.3, color='green', label='Episode Length')
         
-        # Plot moving average if enough data
         if len(self.episode_lengths) >= self.window_size:
             moving_avg = np.convolve(self.episode_lengths, 
                                      np.ones(self.window_size)/self.window_size, 
@@ -274,10 +261,8 @@ class MetricsTracker:
         plt.savefig(os.path.join(self.save_dir, f"{filename_base}_rewards.png"))
         plt.close()
         
-        # Plot losses if available
         has_losses = any([len(values) > 0 for values in self.losses.values()])
         if has_losses:
-            # Count how many loss types have values
             loss_types_with_values = [loss_type for loss_type, values in self.losses.items() if len(values) > 0]
             num_loss_types = len(loss_types_with_values)
             
@@ -295,7 +280,6 @@ class MetricsTracker:
                 plt.savefig(os.path.join(self.save_dir, f"{filename_base}_losses.png"))
                 plt.close()
         
-        # Plot exploration if available
         if self.exploration_values:
             plt.figure(figsize=(10, 6))
             plt.plot(self.exploration_values, label='Exploration Rate')
@@ -306,10 +290,8 @@ class MetricsTracker:
             plt.savefig(os.path.join(self.save_dir, f"{filename_base}_exploration.png"))
             plt.close()
         
-        # Plot parameter statistics if available
         has_param_stats = any([len(values) > 0 for values in self.param_stats.values()])
         if has_param_stats:
-            # Count how many parameter stats have values
             param_stats_with_values = [stat_type for stat_type, values in self.param_stats.items() if len(values) > 0]
             num_param_stats = len(param_stats_with_values)
             

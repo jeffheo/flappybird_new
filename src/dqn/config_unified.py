@@ -20,8 +20,6 @@ class UnifiedAgentConfig:
         model_dir="../models/DQN_unified.pt",
         feature_extractor='resnet',
         finetune_features=False,
-        use_frame_stack=True,
-        frame_stack_size=4,
         target_size=(84, 84),
         preprocess_method="enhanced"
     ):
@@ -45,8 +43,6 @@ class UnifiedAgentConfig:
         self.model_dir = model_dir
         self.feature_extractor = feature_extractor
         self.finetune_features = finetune_features
-        self.use_frame_stack = use_frame_stack
-        self.frame_stack_size = frame_stack_size
         self.target_size = target_size
         self.preprocess_method = preprocess_method
 

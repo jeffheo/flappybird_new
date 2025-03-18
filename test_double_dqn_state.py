@@ -7,11 +7,11 @@ import numpy as np
 
 def main(model_dir, episodes, render=False):
     env = flappy_bird_gym.make("FlappyBird-v0")
-    
+    env.seed(100)
     params = DoubleDQNStateConfig(
         state_size=2,
         action_size=2,
-        seed=0,
+        seed=100,
         prioritized_memory=False,
         model_dir=model_dir
     )
@@ -19,10 +19,8 @@ def main(model_dir, episodes, render=False):
     agent = AgentDoubleDQNState(**params.dict())
     agent.load_model(model_dir)
     
-    # Disable exploration for evaluation
     agent.epsilon_enabled = False
 
-    # Run episodes and collect scores
     scores = []
     for i in range(episodes):
         print(f"Episode {i+1}/{episodes}")

@@ -3,7 +3,7 @@ class AgentConfig:
         self,
         state_size,
         action_size,
-        seed=1993,
+        seed=0,
         nb_hidden=(64, 64),
         learning_rate=0.0003,
         gamma=0.99,
@@ -14,7 +14,7 @@ class AgentConfig:
         value_coef=0.5,
         entropy_coef=0.01,
         max_grad_norm=0.5,
-        update_interval=2048,
+        update_interval=512,
         model_dir="../models/PPO.pt"
     ):
         

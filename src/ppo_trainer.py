@@ -4,7 +4,6 @@ from src.metrics import MetricsTracker
 
 class PPOTrainer:
     def __init__(self, agent, env, n_episodes=10000, print_range=100, early_stop=None, max_timestep=None, verbose=True, checkpoint_callback=None):
-        
         self.agent = agent
         self.env = env
         self.n_episodes = n_episodes
@@ -24,7 +23,6 @@ class PPOTrainer:
         self.metrics = None
 
     def run(self, logs_callback=None, save_best_model=False, output_path=None, agent_name="PPO", run_dir=None):
-        
         self.metrics = MetricsTracker(agent_name=agent_name, window_size=self.print_range, save_dir=run_dir)
         
         if hasattr(self.agent, 'set_metrics_tracker'):
@@ -66,11 +64,9 @@ class PPOTrainer:
                     if self.verbose:
                         print(f"\nNew best score: {score}! Model saved to {output_path}")
             
-            # Print progress
             if self.verbose and i_episode % self.print_range == 0:
                 print(f'Episode {i_episode}\tAverage Score: {np.mean(self.scores_window):.2f}\tTotal Timesteps: {self.total_timesteps}')
                 
-                # Log exploration if available
                 stats = self.metrics.get_current_stats()
                 if 'exploration' in stats:
                     print(f'Exploration Rate: {stats["exploration"]:.4f}')
@@ -84,7 +80,6 @@ class PPOTrainer:
                 except Exception as e:
                     print(f"Error in checkpoint callback: {e}")
             
-            # Check if environment solved
             if self.early_stop and np.mean(self.scores_window) >= self.early_stop:
                 if self.verbose:
                     print(f'\nEnvironment solved in {i_episode} episodes!\tAverage Score: {np.mean(self.scores_window):.2f}')

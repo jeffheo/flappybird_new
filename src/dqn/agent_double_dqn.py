@@ -12,11 +12,11 @@ class AgentDoubleDQN:
         self,
         state_size,
         action_size,
-        seed=1993,
-        nb_hidden=(256, 128),
-        learning_rate=0.0001,
-        memory_size=10000,
-        batch_size=32,
+        seed=0,
+        nb_hidden=(64,64),
+        learning_rate=0.0005,
+        memory_size=100000,
+        batch_size=64,
         gamma=0.99,
         tau=0.001,
         update_every=4,
@@ -27,10 +27,7 @@ class AgentDoubleDQN:
         model_dir="../models/DQN_double.pt",
         feature_extractor='resnet',
         finetune_features=False,
-        use_frame_stack=True,
-        frame_stack_size=4,
-        target_size=(84, 84),
-        preprocess_method="enhanced"
+        target_size=(224, 224),
     ):
         
         self.state_size = state_size
@@ -40,22 +37,13 @@ class AgentDoubleDQN:
         print(f"Using device: {self.device}", flush=True)
         print(f"Using Double DQN algorithm", flush=True)
         
-        # Image feature related parameters
         self.feature_extractor = feature_extractor
         self.finetune_features = finetune_features
-        self.use_frame_stack = use_frame_stack
-        self.frame_stack_size = frame_stack_size
         self.target_size = target_size
-        self.preprocess_method = preprocess_method
         
-        # Initialize preprocessor
         self.preprocessor = ImagePreprocessor(
-            method=preprocess_method,
             target_size=target_size,
-            use_frame_stack=use_frame_stack,
-            frame_stack_size=frame_stack_size,
         )
-        
         
         # Q-Network
         self.qnetwork_local = QNetworkUnified(
@@ -74,7 +62,6 @@ class AgentDoubleDQN:
             freeze_features=not finetune_features  # Freeze features if not fine-tuning
         ).to(self.device)
         
-        # Set up optimizer with different learning rates for feature extractor and Q-value heads
         if finetune_features:
             # If fine-tuning feature extractor, use lower learning rate for feature extractor
             feature_params = list(self.qnetwork_local.features.parameters())
@@ -88,22 +75,16 @@ class AgentDoubleDQN:
             ])
             print(f"Fine-tuning {feature_extractor} with reduced learning rate", flush=True)
         else:
-            # Standard optimizer setup
             self.optimizer = optim.Adam(self.qnetwork_local.parameters(), lr=learning_rate)
             if feature_extractor != 'spatial_cnn':
                 print(f"Using frozen {feature_extractor} feature extractor", flush=True)
         
-        # Replay memory
         self.memory = deque(maxlen=memory_size)
         self.batch_size = batch_size
-        
-        # Initialize time step (for updating every UPDATE_EVERY steps)
         self.t_step = 0
         self.UPDATE_EVERY = update_every
         self.GAMMA = gamma
         self.TAU = tau
-        
-        # Epsilon-greedy action selection
         self.epsilon_enabled = epsilon_enabled
         self.epsilon = epsilon_start
         self.epsilon_end = epsilon_end
@@ -117,17 +98,12 @@ class AgentDoubleDQN:
     def step(self, state, action, reward, next_state, done):
         # Process the state and next_state if they are raw RGB images
         if isinstance(state, np.ndarray) and state.ndim == 3 and state.shape[2] == 3:
-            # If state is a raw RGB image
             state = self.preprocessor.process(state)
             
         if isinstance(next_state, np.ndarray) and next_state.ndim == 3 and next_state.shape[2] == 3:
-            # If next_state is a raw RGB image
             next_state = self.preprocessor.process(next_state)
         
-        # Save experience in replay memory
         self.memory.append(self.Experience(state, action, reward, next_state, done))
-        
-        # Learn every UPDATE_EVERY time steps
         self.t_step = (self.t_step + 1) % self.UPDATE_EVERY
         if self.t_step == 0 and len(self.memory) > self.batch_size:
             experiences = self._sample_experiences()
@@ -137,8 +113,6 @@ class AgentDoubleDQN:
         """Returns actions for given state as per current policy"""
         # Process the state if it's a raw RGB image
         if isinstance(state, np.ndarray) and state.ndim == 3 and state.shape[2] == 3:
-            # If state is a raw RGB image
-            
             state = self.preprocessor.process(state)
         
         state = torch.from_numpy(state).float().unsqueeze(0).to(self.device)
@@ -147,7 +121,6 @@ class AgentDoubleDQN:
             action_values = self.qnetwork_local(state)
         self.qnetwork_local.train()
 
-        # Epsilon-greedy action selection
         if self.epsilon_enabled and random.random() < self.epsilon:
             return random.choice(np.arange(self.action_size))
         else:
@@ -170,45 +143,30 @@ class AgentDoubleDQN:
         # 2. Use the target network to evaluate the Q-values of those actions
         next_q_values = self.qnetwork_target(next_states).gather(1, local_actions)
         
-        # Compute Q targets for current states
         Q_targets = rewards + (self.GAMMA * next_q_values * (1 - dones))
-
-        # Get expected Q values from local model
         Q_expected = self.qnetwork_local(states).gather(1, actions)
-
-        # Compute TD error for metrics
         td_error = (Q_targets - Q_expected).abs().mean().item()
         
-        # Compute loss
         loss = nn.MSELoss()(Q_expected, Q_targets)
         loss_value = loss.item()
-        
-        # Minimize the loss
         self.optimizer.zero_grad()
         loss.backward()
         
-        # Calculate gradient norm for metrics
         grad_norm = 0
         for param in self.qnetwork_local.parameters():
             if param.grad is not None:
                 grad_norm += param.grad.data.norm(2).item() ** 2
         grad_norm = grad_norm ** 0.5
         
-        # Track metrics if metrics_tracker is available
         if hasattr(self, 'metrics_tracker') and self.metrics_tracker is not None:
             self.metrics_tracker.log_loss(total=loss_value, td_error=td_error)
             self.metrics_tracker.log_param_stats(self.qnetwork_local, grad_norm=grad_norm)
         
-        # Store last loss and TD error for logging
         self.last_loss = loss_value
         self.last_td_error = td_error
         
         self.optimizer.step()
-
-        # Update target network
         self._soft_update(self.qnetwork_local, self.qnetwork_target)
-        
-        # Update epsilon
         self.epsilon = max(self.epsilon_end, self.epsilon * self.epsilon_decay)
 
     def _soft_update(self, local_model, target_model):
@@ -220,7 +178,6 @@ class AgentDoubleDQN:
         """Randomly sample a batch of experiences from memory"""
         experiences = random.sample(self.memory, k=self.batch_size)
         
-        # Ensure proper shape for image inputs
         states = np.stack([e.state for e in experiences])
         next_states = np.stack([e.next_state for e in experiences])
         
@@ -251,25 +208,19 @@ class AgentDoubleDQN:
         """
         load_path = path if path is not None else self.model_dir
         
-        # Determine device to load model to
         if device is None:
-            # Try to use CUDA if available, otherwise use CPU
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         elif isinstance(device, str):
-            # Convert string to torch.device
             device = torch.device(device)
         
         try:
-            # Load model with specified device
             self.qnetwork_local.load_state_dict(torch.load(load_path, map_location=device))
             self.qnetwork_target.load_state_dict(torch.load(load_path, map_location=device))
             print(f"Model loaded from {load_path} to {device}", flush=True)
         except Exception as e:
             print(f"Error loading model: {e}", flush=True)
-            # Attempt fallback to CPU if loading to GPU failed
             if device.type == 'cuda':
                 try:
-                    print("Attempting fallback to CPU...", flush=True)
                     cpu_device = torch.device('cpu')
                     self.qnetwork_local.load_state_dict(torch.load(load_path, map_location=cpu_device))
                     self.qnetwork_target.load_state_dict(torch.load(load_path, map_location=cpu_device))
@@ -286,12 +237,10 @@ class AgentDoubleDQN:
             "finetune_features": self.finetune_features
         }
         
-        # Add loss and TD error if available
         if hasattr(self, 'last_loss'):
             log_data["loss"] = self.last_loss
         if hasattr(self, 'last_td_error'):
             log_data["td_error"] = self.last_td_error
-            
         return log_data
     
     def set_metrics_tracker(self, metrics_tracker):

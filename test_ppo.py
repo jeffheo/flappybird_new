@@ -6,22 +6,18 @@ import numpy as np
 import argparse
 
 def main(model_dir, episodes):
-    # Initialize environment
     env = flappy_bird_gym.make("FlappyBird-v0")
-    
-    # Initialize agent with same parameters
+    env.seed(100)
     params = AgentConfig(
         state_size=2,
         action_size=2,
-        seed=0,
+        seed=100,
         model_dir=model_dir
     )
 
-    # Create agent and load trained model
     agent = Agent(**params.dict())
     agent.load_model(model_dir)
     
-    # Run episodes and collect scores
     scores = []
     for i in range(episodes):
         score = play_env(agent, env, fps=30, render=False)

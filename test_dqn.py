@@ -6,10 +6,9 @@ from src.utils_dqn import play_env_dqn
 import numpy as np
 
 def main(model_dir, episodes, render):
-    # Initialize environment
     env = flappy_bird_gym.make("FlappyBird-v0")
-    
-    # Initialize agent with same parameters
+    env.seed(100)
+
     params = AgentConfig(
         state_size=2,
         action_size=2,
@@ -18,14 +17,10 @@ def main(model_dir, episodes, render):
         model_dir=model_dir
     )
 
-    # Create agent and load trained model
     agent = Agent(**params.dict())
     agent.load_model(model_dir)
     
-    # Disable exploration for evaluation
     agent.epsilon_enabled = False
-
-    # Run 10 episodes and collect scores
     scores = []
     for i in range(episodes):
         score = play_env_dqn(agent, env, fps=30, render=render)

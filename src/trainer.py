@@ -6,7 +6,6 @@ from src.metrics import MetricsTracker
 
 class Trainer:
     def __init__(self, agent, env, n_episodes=10000, print_range=100, early_stop=None, max_timestep=None, verbose=True, checkpoint_callback=None):
-        
         self.agent = agent
         self.env = env
         self.n_episodes = n_episodes
@@ -70,7 +69,6 @@ class Trainer:
                 self.scores_window.append(score)
                 self.scores.append(score)
                 
-                # Update best score
                 if score > self.best_score:
                     self.best_score = score
                     if save_best_model and output_path:
@@ -81,7 +79,6 @@ class Trainer:
                         except Exception as e:
                             print(f"Error saving best model: {e}", flush=True)
                 
-                # Print progress
                 if self.verbose and i_episode % self.print_range == 0:
                     print(f'Episode {i_episode}\tAverage Score: {np.mean(self.scores_window):.2f}', flush=True)
                     
@@ -96,20 +93,17 @@ class Trainer:
                     if logs_callback:
                         logs_callback()
                 
-                # Call checkpoint callback if provided
                 if self.checkpoint_callback:
                     try:
                         self.checkpoint_callback(self, i_episode)
                     except Exception as e:
                         print(f"Error in checkpoint callback: {e}", flush=True)
-                
-                # Check if environment solved
+
                 if self.early_stop and np.mean(self.scores_window) >= self.early_stop:
                     if self.verbose:
                         print(f'\nEnvironment solved in {i_episode} episodes!', flush=True)
                     break
                 
-                # Clean up memory every 10 episodes
                 if i_episode % 10 == 0:
                     gc.collect()
                     if self.use_cuda:

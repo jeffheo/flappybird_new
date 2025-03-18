@@ -49,8 +49,8 @@ class Agent:
         self,
         state_size,
         action_size,
-        seed=1993,
-        nb_hidden=(256, 128),
+        seed=0,
+        nb_hidden=(64, 64),
         learning_rate=0.0003,
         gamma=0.99,
         gae_lambda=0.95,
@@ -60,16 +60,12 @@ class Agent:
         value_coef=0.5,
         entropy_coef=0.01,
         max_grad_norm=0.5,
-        update_interval=2048,
+        update_interval=512,
         model_dir="../models/PPO_RGB.pt",
         feature_extractor="resnet",  # Fixed to ResNet
         finetune_features=False,
-        use_frame_stack=True,
-        frame_stack_size=4,
-        target_size=(84, 84),
-        preprocess_method="basic"
+        target_size=(224, 224),
     ):
-        
         self.state_size = state_size  
         self.action_size = action_size
         self.gamma = gamma
@@ -84,10 +80,7 @@ class Agent:
         
         self.feature_extractor = feature_extractor 
         self.finetune_features = finetune_features
-        self.use_frame_stack = use_frame_stack
-        self.frame_stack_size = frame_stack_size
         self.target_size = target_size
-        self.preprocess_method = preprocess_method
         
         self.seed = torch.manual_seed(seed)
         random.seed(seed)
@@ -95,12 +88,7 @@ class Agent:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(f"Using device: {self.device}")
         
-        self.preprocessor = ImagePreprocessor(
-            method=preprocess_method,
-            target_size=target_size,
-            use_frame_stack=use_frame_stack,
-            frame_stack_size=frame_stack_size,
-        )
+        self.preprocessor = ImagePreprocessor(target_size=target_size)
         
         # Actor-Critic network
         self.actor_critic = ActorCritic(
@@ -189,15 +177,7 @@ class Agent:
         if self.timesteps_since_learn >= self.update_interval:
             self.learn()
             self.timesteps_since_learn = 0
-            
-            if done and self.use_frame_stack:
-                self.preprocessor.reset()
-            
             return True
-        
-        if done and self.use_frame_stack:
-            self.preprocessor.reset()
-            
         return False
     
     def learn(self):
@@ -260,9 +240,7 @@ class Agent:
                 actor_loss = -torch.min(surr1, surr2).mean()
                 critic_loss = F.mse_loss(critic_values.squeeze(), batch_returns)
                 entropy_loss = entropy.mean()
-                
                 total_loss = actor_loss + self.value_coef * critic_loss - self.entropy_coef * entropy_loss
-                
                 self.optimizer.zero_grad()
                 total_loss.backward()
                 
@@ -331,7 +309,6 @@ class Agent:
             'model_state_dict': self.actor_critic.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
             'feature_extractor': self.feature_extractor,
-            'preprocess_method': self.preprocess_method,
             'state_size': self.state_size,
             'action_size': self.action_size,
         }, path)
@@ -346,13 +323,10 @@ class Agent:
         
         if 'feature_extractor' in checkpoint:
             self.feature_extractor = checkpoint['feature_extractor']
-        if 'preprocess_method' in checkpoint:
-            self.preprocess_method = checkpoint['preprocess_method']
     
     def logs(self):
         return {
             "feature_extractor": self.feature_extractor,
-            "preprocess_method": self.preprocess_method,
             "finetune": "yes" if self.finetune_features else "no",
             "loss": self.last_loss,
             "policy_loss": self.last_policy_loss,

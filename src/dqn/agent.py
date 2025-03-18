@@ -11,11 +11,10 @@ class Agent:
         self,
         state_size,
         action_size,
-        seed=1993,
+        seed=0,
         nb_hidden=(64, 64),
         learning_rate=0.0005,
         memory_size=100000,
-        prioritized_memory=False,
         batch_size=64,
         gamma=0.99,
         tau=0.001,
@@ -51,7 +50,6 @@ class Agent:
         self.epsilon_end = epsilon_end
         self.epsilon_decay = epsilon_decay
         
-        self.prioritized_memory = prioritized_memory
         self.small_eps = small_eps
         
         self.model_dir = model_dir

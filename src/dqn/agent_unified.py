@@ -12,11 +12,11 @@ class AgentUnified:
         self,
         state_size,
         action_size,
-        seed=1993,
-        nb_hidden=(256, 128),
-        learning_rate=0.0001,
-        memory_size=10000,
-        batch_size=32,
+        seed=0,
+        nb_hidden=(64,64),
+        learning_rate=0.0005,
+        memory_size=100000,
+        batch_size=64,
         gamma=0.99,
         tau=0.001,
         update_every=4,
@@ -29,7 +29,7 @@ class AgentUnified:
         finetune_features=False,
         use_frame_stack=True,
         frame_stack_size=4,
-        target_size=(84, 84),
+        target_size=(224, 224),
         preprocess_method="enhanced"
     ):
         self.state_size = state_size
@@ -45,15 +45,10 @@ class AgentUnified:
         self.target_size = target_size
         self.preprocess_method = preprocess_method
         
-        # Initialize preprocessor
         self.preprocessor = ImagePreprocessor(
-            method=preprocess_method,
             target_size=target_size,
-            use_frame_stack=use_frame_stack,
-            frame_stack_size=frame_stack_size
         )
         
-        # Q-Network
         self.qnetwork_local = QNetworkUnified(
             state_size, 
             action_size, 
@@ -84,8 +79,7 @@ class AgentUnified:
             print(f"Fine-tuning {feature_extractor} with reduced learning rate", flush=True)
         else:
             self.optimizer = optim.Adam(self.qnetwork_local.parameters(), lr=learning_rate)
-            if feature_extractor != 'spatial_cnn':
-                print(f"Using frozen {feature_extractor} feature extractor", flush=True)
+            print(f"Using frozen {feature_extractor} feature extractor", flush=True)
         
         self.memory = deque(maxlen=memory_size)
         self.batch_size = batch_size
@@ -95,7 +89,6 @@ class AgentUnified:
         self.GAMMA = gamma
         self.TAU = tau
         
-        # Epsilon-greedy action selection
         self.epsilon_enabled = epsilon_enabled
         self.epsilon = epsilon_start
         self.epsilon_end = epsilon_end
@@ -115,10 +108,7 @@ class AgentUnified:
             
             next_state = self.preprocessor.process(next_state)
         
-        # Save experience in replay memory
         self.memory.append(self.Experience(state, action, reward, next_state, done))
-        
-        # Learn every UPDATE_EVERY time steps
         self.t_step = (self.t_step + 1) % self.UPDATE_EVERY
         if self.t_step == 0 and len(self.memory) > self.batch_size:
             experiences = self._sample_experiences()
@@ -135,7 +125,6 @@ class AgentUnified:
             action_values = self.qnetwork_local(state)
         self.qnetwork_local.train()
 
-        # Epsilon-greedy 
         if self.epsilon_enabled and random.random() < self.epsilon:
             return random.choice(np.arange(self.action_size))
         else:
@@ -245,39 +234,3 @@ class AgentUnified:
     def reset(self):
         if hasattr(self, 'preprocessor'):
             self.preprocessor.reset()
-            
-    def save_replay_buffer_samples(self, path, num_samples=100):
-        try:
-            if not self.memory or len(self.memory) == 0:
-                print("Replay buffer is empty", flush=True)
-                return
-                
-            num_samples = min(num_samples, len(self.memory))
-            samples = random.sample(list(self.memory), num_samples)
-            
-            serializable_samples = []
-            for experience in samples:
-                sample_dict = {
-                    "state_shape": experience.state.shape,
-                    "action": int(experience.action),
-                    "reward": float(experience.reward),
-                    "next_state_shape": experience.next_state.shape,
-                    "done": bool(experience.done)
-                }
-                serializable_samples.append(sample_dict)
-            
-            import json
-            import os
-            
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-            
-            with open(path, 'w') as f:
-                json.dump({
-                    "buffer_size": len(self.memory),
-                    "sample_size": num_samples,
-                    "samples_metadata": serializable_samples
-                }, f, indent=4)
-                
-            print(f"Replay buffer samples metadata saved to {path}", flush=True)
-        except Exception as e:
-            print(f"Error saving replay buffer samples: {e}", flush=True) 
