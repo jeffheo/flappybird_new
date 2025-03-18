@@ -3,11 +3,10 @@ class UnifiedAgentConfig:
         self,
         state_size,
         action_size,
-        seed=1993,
-        nb_hidden=(256, 128),
+        seed=1,
+        nb_hidden=(64,64),
         learning_rate=0.0001,
         memory_size=10000,
-        prioritized_memory=False,
         batch_size=64,
         gamma=0.99,
         tau=0.001,
@@ -20,8 +19,7 @@ class UnifiedAgentConfig:
         model_dir="../models/DQN_unified.pt",
         feature_extractor='resnet',
         finetune_features=False,
-        target_size=(84, 84),
-        preprocess_method="enhanced"
+        target_size=(224,224),
     ):
         
         self.state_size = state_size
@@ -30,7 +28,6 @@ class UnifiedAgentConfig:
         self.nb_hidden = nb_hidden
         self.learning_rate = learning_rate
         self.memory_size = memory_size
-        self.prioritized_memory = prioritized_memory
         self.batch_size = batch_size
         self.gamma = gamma
         self.tau = tau
@@ -44,7 +41,6 @@ class UnifiedAgentConfig:
         self.feature_extractor = feature_extractor
         self.finetune_features = finetune_features
         self.target_size = target_size
-        self.preprocess_method = preprocess_method
 
     def dict(self):
         return self.__dict__ 

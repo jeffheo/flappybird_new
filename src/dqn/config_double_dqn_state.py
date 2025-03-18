@@ -5,7 +5,7 @@ class DoubleDQNStateConfig:
         self,
         state_size,
         action_size,
-        seed=0,
+        seed=1,
         nb_hidden=(64, 64),
         learning_rate=0.0005,
         memory_size=100000,
@@ -43,22 +43,4 @@ class DoubleDQNStateConfig:
         self.use_cnn = use_cnn
     
     def dict(self):
-        return {
-            "state_size": self.state_size,
-            "action_size": self.action_size,
-            "seed": self.seed,
-            "nb_hidden": self.nb_hidden,
-            "learning_rate": self.learning_rate,
-            "memory_size": self.memory_size,
-            "batch_size": self.batch_size,
-            "gamma": self.gamma,
-            "tau": self.tau,
-            "small_eps": self.small_eps,
-            "update_every": self.update_every,
-            "epsilon_enabled": self.epsilon_enabled,
-            "epsilon_start": self.epsilon_start,
-            "epsilon_end": self.epsilon_end,
-            "epsilon_decay": self.epsilon_decay,
-            "model_dir": self.model_dir,
-            "use_cnn": self.use_cnn
-        } 
+        return self.__dict__ 

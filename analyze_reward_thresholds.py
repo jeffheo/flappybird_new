@@ -1,7 +1,6 @@
 import os
 import pandas as pd
 import numpy as np
-import glob
 import argparse
 import matplotlib.pyplot as plt
 
@@ -21,7 +20,6 @@ def find_first_reward_threshold(csv_file, reward_thresholds):
         df = pd.read_csv(csv_file)
         
         results = {threshold: None for threshold in reward_thresholds}
-        
         sorted_thresholds = sorted(reward_thresholds)
         
         for threshold in sorted_thresholds:
@@ -30,42 +28,10 @@ def find_first_reward_threshold(csv_file, reward_thresholds):
             if not threshold_episodes.empty:
                 first_episode = threshold_episodes.iloc[0]['episode']
                 results[threshold] = first_episode
-        
         return results
     except Exception as e:
         print(f"Error processing {csv_file}: {e}")
         return {threshold: None for threshold in reward_thresholds}
-
-def get_method_name(file_path):
-    """Extract the method name from the file path"""
-    dir_name = os.path.basename(os.path.dirname(file_path))
-    
-    if '_run_' in dir_name:
-        method_name = dir_name.split('_run_')[0]
-    else:
-        method_name = dir_name
-    
-    return method_name
-
-def find_latest_episode_file(method_dir):
-    """Find the latest (highest episode number) episodes CSV file in a method directory"""
-    episode_files = glob.glob(os.path.join(method_dir, "*episodes.csv"))
-    
-    if not episode_files:
-        return None
-    
-    def get_episode_number(file_path):
-        filename = os.path.basename(file_path)
-        if 'episode_' in filename:
-            try:
-                episode_str = filename.split('episode_')[1].split('_')[0]
-                return int(episode_str)
-            except (IndexError, ValueError):
-                return 0
-        return 0
-    
-    episode_files.sort(key=get_episode_number, reverse=True)
-    return episode_files[0]
 
 def plot_reward_progression(method_files, window_size=100, figsize=(12, 8), use_subplots=False):
     """
@@ -77,20 +43,17 @@ def plot_reward_progression(method_files, window_size=100, figsize=(12, 8), use_
         figsize: Figure size for the plot
         use_subplots: If True, plot each method in a separate subplot
     """
-    colors = ['blue', 'orange', 'green', 'red', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
+    colors = ['blue', 'orange', 'green', 'red', 'purple', 'brown', 'pink', 'gray', 'olive']
     line_styles = ['-', '--', '-.', ':']
     
     if use_subplots:
         num_methods = len(method_files)
         fig, axes = plt.subplots(num_methods, 1, figsize=(figsize[0], figsize[1] * num_methods // 2), sharex=True)
-        
         for i, (method, file_path) in enumerate(method_files.items()):
             try:
                 df = pd.read_csv(file_path)
-                
                 if 'reward_moving_avg' not in df.columns or df['reward_moving_avg'].isna().all():
                     df['reward_moving_avg'] = df['reward'].rolling(window=window_size, min_periods=1).mean()
-                
                 ax = axes[i] if num_methods > 1 else axes
                 
                 color_idx = i % len(colors)
@@ -107,7 +70,6 @@ def plot_reward_progression(method_files, window_size=100, figsize=(12, 8), use_
                 
             except Exception as e:
                 print(f"Error plotting {method}: {e}")
-        
         plt.xlabel('Episode')
         fig.suptitle(f'Reward Progression (Moving Avg Window: {window_size})')
         plt.tight_layout()
@@ -118,10 +80,8 @@ def plot_reward_progression(method_files, window_size=100, figsize=(12, 8), use_
         for i, (method, file_path) in enumerate(method_files.items()):
             try:
                 df = pd.read_csv(file_path)
-                
                 if 'reward_moving_avg' not in df.columns or df['reward_moving_avg'].isna().all():
                     df['reward_moving_avg'] = df['reward'].rolling(window=window_size, min_periods=1).mean()
-                
                 color_idx = i % len(colors)
                 style_idx = (i // len(colors)) % len(line_styles)
                 plt.plot(df['episode'], df['reward_moving_avg'], 
@@ -156,7 +116,6 @@ def plot_grouped_by_range(method_files, window_size=100, figsize=(12, 8)):
     for method, file_path in method_files.items():
         try:
             df = pd.read_csv(file_path)
-            
             if 'reward_moving_avg' not in df.columns or df['reward_moving_avg'].isna().all():
                 df['reward_moving_avg'] = df['reward'].rolling(window=window_size, min_periods=1).mean()
             
@@ -167,7 +126,7 @@ def plot_grouped_by_range(method_files, window_size=100, figsize=(12, 8)):
             print(f"Error analyzing {method}: {e}")
     
     if not method_max_values:
-        return  # No data to plot
+        return
     
     thresholds = [0, 500, 1000, float('inf')]
     range_labels = [f"{thresholds[i]} - {thresholds[i+1]}" for i in range(len(thresholds)-1)]
@@ -183,17 +142,15 @@ def plot_grouped_by_range(method_files, window_size=100, figsize=(12, 8)):
     methods_by_range = {k: v for k, v in methods_by_range.items() if v}
     
     if not methods_by_range:
-        return  # No groups to plot
+        return
     
     num_ranges = len(methods_by_range)
     fig, axes = plt.subplots(num_ranges, 1, figsize=(figsize[0], figsize[1] * num_ranges // 2), sharex=True)
     
     if num_ranges == 1:
         axes = [axes]
-    
-    colors = ['blue', 'orange', 'green', 'red', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
+    colors = ['blue', 'orange', 'green', 'red', 'purple', 'brown', 'pink', 'gray', 'olive']
     line_styles = ['-', '--', '-.', ':']
-    
     for i, (range_label, methods) in enumerate(methods_by_range.items()):
         ax = axes[i]
         

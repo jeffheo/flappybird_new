@@ -1,3 +1,4 @@
+import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import flappy_bird_gym
@@ -106,12 +107,16 @@ def create_checkpoint_callback(agent, run_dir, checkpoints_dir, seed, checkpoint
     return checkpoint_callback
 
 def main():
+    parser = argparse.ArgumentParser(description='Train a Double DQN model on Flappy Bird')
+    parser.add_argument('--seed', type=int, default=1, help='Seed for the environment')
+    args = parser.parse_args()
+    
     run_dir, models_dir, checkpoints_dir, run_name = create_run_directory()
     print(f"Training results will be saved to: {run_dir}")
     
     env = flappy_bird_gym.make("FlappyBird-v0")
     
-    seed = 1
+    seed = args.seed
     env.seed(seed)
     params = DoubleDQNStateConfig(
         state_size=2,

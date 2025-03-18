@@ -8,8 +8,7 @@ from src.dqn.agent_unified import AgentUnified
 from src.dqn.config_unified import UnifiedAgentConfig
 
 def test_model(model_path, episodes=10, render=False, delay=0.01, feature_extractor='resnet', 
-               target_size=(84, 84), 
-               preprocess_method='enhanced', device=None):
+               target_size=(224, 224), device=None, seed=100):
     """
     Test a saved DQN model on the Flappy Bird environment.
     
@@ -20,19 +19,16 @@ def test_model(model_path, episodes=10, render=False, delay=0.01, feature_extrac
         delay: Delay between frames (for visualization)
         feature_extractor: Feature extractor used in the model
         target_size: Image size used for preprocessing
-        preprocess_method: Preprocessing method used
         device: Device to load the model to ('cuda', 'cpu')
     """
     os.environ['SDL_AUDIODRIVER'] = 'dummy'
     
     env = flappy_bird_gym.make("FlappyBird-rgb-v0")
     
-    seed = 100
     env.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     
-    # Grayscale input without frame stacking
     state_shape = (1, target_size[0], target_size[1])
     
     params = UnifiedAgentConfig(
@@ -50,7 +46,6 @@ def test_model(model_path, episodes=10, render=False, delay=0.01, feature_extrac
         feature_extractor=feature_extractor,
         finetune_features=False,  # Not relevant for testing
         target_size=target_size,
-        preprocess_method=preprocess_method
     )
     
     agent = AgentUnified(**params.dict())
@@ -109,11 +104,10 @@ def main():
                         help='Feature extractor used in the model')
     parser.add_argument('--target_size', type=str, default='224,224',
                         help='Target size for processed images (height,width)')
-    parser.add_argument('--preprocess_method', type=str, default='enhanced',
-                        choices=['basic', 'enhanced', 'context'],
-                        help='Preprocessing method used')
     parser.add_argument('--device', type=str, default=None,
                         help='Device to load the model to (\'cuda\', \'cpu\')')
+    parser.add_argument('--seed', type=int, default=100,
+                        help='Seed for the environment')
     
     args = parser.parse_args()
     
@@ -126,8 +120,8 @@ def main():
         delay=args.delay,
         feature_extractor=args.feature_extractor,
         target_size=target_size,
-        preprocess_method=args.preprocess_method,
-        device=args.device
+        device=args.device,
+        seed=args.seed
     )
 
 if __name__ == "__main__":

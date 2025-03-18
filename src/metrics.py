@@ -135,8 +135,6 @@ class MetricsTracker:
         return stats
     
     def create_episode_dataframe(self):
-        
-        # Create base dataframe with episode metrics
         data = {
             'episode': list(range(1, len(self.episode_rewards) + 1)),
             'reward': self.episode_rewards,
@@ -144,7 +142,6 @@ class MetricsTracker:
             'episode_time': self.episode_times
         }
         
-        # Add moving averages
         window = min(self.window_size, len(self.episode_rewards))
         if window > 0:
             data['reward_moving_avg'] = pd.Series(self.episode_rewards).rolling(window=window).mean().values

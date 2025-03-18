@@ -125,7 +125,7 @@ def main():
     parser = argparse.ArgumentParser(description='Train DQN with various feature extractors on Flappy Bird')
     parser.add_argument('--suffix', type=str, default='', help='Suffix to append to output filenames')
     parser.add_argument('--feature_extractor', type=str, default='resnet', 
-                        choices=['spatial_cnn', 'resnet', 'efficientnet'],
+                        choices=['spatial_cnn', 'resnet'],
                         help='Feature extractor to use')
     parser.add_argument('--finetune', action='store_true', 
                         help='Whether to fine-tune the feature extractor')
@@ -133,19 +133,12 @@ def main():
                         help='Number of episodes to train for')
     parser.add_argument('--lr', type=float, default=0.0001, 
                         help='Learning rate')
-    parser.add_argument('--batch_size', type=int, default=16, 
+    parser.add_argument('--batch_size', type=int, default=64, 
                         help='Batch size')
-    parser.add_argument('--hidden_size', type=str, default='256,128', 
+    parser.add_argument('--hidden_size', type=str, default='64,64', 
                         help='Hidden layer sizes (comma-separated)')
-    parser.add_argument('--frame_stack', action='store_true', default=False,
-                        help='Whether to use frame stacking')
-    parser.add_argument('--frame_stack_size', type=int, default=2,
-                        help='Number of frames to stack')
-    parser.add_argument('--target_size', type=str, default='84,84',
+    parser.add_argument('--target_size', type=str, default='224,224',
                         help='Target size for processed images (height,width)')
-    parser.add_argument('--preprocess_method', type=str, default='enhanced',
-                        choices=['basic', 'enhanced', 'context'],
-                        help='Preprocessing method')
     parser.add_argument('--early_stop', type=int, default=5000,
                         help='Early stopping score threshold')
     parser.add_argument('--checkpoint_freq', type=int, default=100,
@@ -174,7 +167,6 @@ def main():
     state_shape = (1, target_size[0], target_size[1])
     
     print(f"Using {args.feature_extractor} feature extractor", flush=True)
-    print(f"Preprocessing method: {args.preprocess_method}", flush=True)
     print(f"Target size: {target_size}", flush=True)
     print(f"State shape: {state_shape}", flush=True)
     print(f"Run directory: {run_dir}", flush=True)
@@ -198,8 +190,7 @@ def main():
         nb_hidden=hidden_size,
         feature_extractor=args.feature_extractor,
         finetune_features=args.finetune,
-        target_size=target_size,
-        preprocess_method=args.preprocess_method
+        target_size=target_size
     )
 
     agent = AgentUnified(
@@ -232,8 +223,6 @@ def main():
     trainer = Trainer(agent=agent, env=env, **trainer_args)
     
     try:
-        agent.reset()
-        
         trainer.run(
             logs_callback=agent.logs, 
             save_best_model=True, 

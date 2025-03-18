@@ -3,7 +3,7 @@ class AgentConfig:
         self,
         state_size,
         action_size,
-        seed=0,
+        seed=1,
         nb_hidden=(64,64),
         learning_rate=0.0005,
         memory_size=100000,

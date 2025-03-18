@@ -122,20 +122,17 @@ def main():
                         help='Feature extraction method')
     parser.add_argument('--finetune_features', action='store_true',
                         help='Whether to fine-tune the feature extractor')
-    parser.add_argument('--preprocess_method', type=str, default='basic',
-                        choices=['basic', 'enhanced'],
-                        help='Preprocessing method')
     parser.add_argument('--target_height', type=int, default=224,
                         help='Target image height')
     parser.add_argument('--target_width', type=int, default=224,
                         help='Target image width')
     parser.add_argument('--lr', type=float, default=0.0003,
                         help='Learning rate')
-    parser.add_argument('--update_interval', type=int, default=2048,
+    parser.add_argument('--update_interval', type=int, default=512,
                         help='Steps before PPO update')
     parser.add_argument('--gamma', type=float, default=0.99,
                         help='Discount factor')
-    parser.add_argument('--seed', type=int, default=1993,
+    parser.add_argument('--seed', type=int, default=1,
                         help='Random seed')
     parser.add_argument('--checkpoint_frequency', type=int, default=10000,
                         help='Episodes between checkpoints')
@@ -161,7 +158,7 @@ def main():
         state_size=(channels, args.target_height, args.target_width),
         action_size=2,
         seed=seed,
-        nb_hidden=(256, 128),
+        nb_hidden=(64,64),
         learning_rate=0.0003,
         gamma=0.99,
         gae_lambda=0.95,
@@ -176,7 +173,6 @@ def main():
         feature_extractor=args.feature_extractor,
         finetune_features=args.finetune_features,
         target_size=(224,224),
-        preprocess_method="basic"
     )
 
     agent = Agent(**params.dict())
@@ -186,13 +182,12 @@ def main():
         run_dir=run_dir,
         checkpoints_dir=checkpoints_dir,
         feature_extractor=args.feature_extractor,
-        model_size=args.foundation_model_size,
         seed=seed,
         checkpoint_frequency=args.checkpoint_frequency
     )
     
     trainer_args = {
-        "n_episodes": 200000,
+        "n_episodes":  100000,
         "print_range": 100,
         "early_stop": 5000,
         "max_timestep": 5000,
@@ -209,7 +204,7 @@ def main():
         trainer.run(
             logs_callback=agent.logs, 
             save_best_model=True, 
-            output_path=os.path.join(models_dir, f"PPO_RGB_{args.feature_extractor}_{args.foundation_model_size}_best.pt"),
+            output_path=os.path.join(models_dir, f"PPO_RGB_{args.feature_extractor}_best.pt"),
             run_dir=run_dir,
             agent_name=run_name
         )
@@ -220,7 +215,6 @@ def main():
             run_dir, 
             models_dir, 
             args.feature_extractor, 
-            args.foundation_model_size, 
             seed, 
             final=True
         )
@@ -233,7 +227,6 @@ def main():
             run_dir, 
             models_dir, 
             args.feature_extractor, 
-            args.foundation_model_size, 
             seed, 
             final=False
         )

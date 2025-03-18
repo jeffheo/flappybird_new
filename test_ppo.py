@@ -5,13 +5,13 @@ from src.utils import play_env
 import numpy as np
 import argparse
 
-def main(model_dir, episodes):
+def main(model_dir, episodes, seed=100):
     env = flappy_bird_gym.make("FlappyBird-v0")
-    env.seed(100)
+    env.seed(seed)
     params = AgentConfig(
         state_size=2,
         action_size=2,
-        seed=100,
+        seed=seed,
         model_dir=model_dir
     )
 
@@ -36,6 +36,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Test PPO model')
     parser.add_argument('--model_dir', type=str, required=True, help='Path to the model file')
     parser.add_argument('--episodes', type=int, default=10, help='Number of episodes to run')
+    parser.add_argument('--seed', type=int, default=100, help='Seed for the environment')
     args = parser.parse_args()
     
-    main(args.model_dir, args.episodes)
+    main(args.model_dir, args.episodes, args.seed)

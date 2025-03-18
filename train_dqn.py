@@ -106,19 +106,22 @@ def create_checkpoint_callback(agent, run_dir, checkpoints_dir, seed, checkpoint
     return checkpoint_callback
 
 def main():
+    parser = argparse.ArgumentParser(description='Train DQN model')
+    parser.add_argument('--seed', type=int, default=1, help='Seed for the environment')
+    args = parser.parse_args()
+
     run_dir, models_dir, checkpoints_dir, run_name = create_run_directory()
     print(f"Training results will be saved to: {run_dir}")
     
     env = flappy_bird_gym.make("FlappyBird-v0")
     
-    seed = 2
+    seed = args.seed
     env.seed(seed)
 
     params = AgentConfig(
         state_size=2,
         action_size=2,
         seed=seed,
-        prioritized_memory=False,
         model_dir=os.path.join(models_dir, "DQN.pt"),
         learning_rate=0.0005,
         batch_size=64,

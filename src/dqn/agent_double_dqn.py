@@ -170,7 +170,7 @@ class AgentDoubleDQN:
         self.epsilon = max(self.epsilon_end, self.epsilon * self.epsilon_decay)
 
     def _soft_update(self, local_model, target_model):
-        """Soft update model parameters: θ_target = τ*θ_local + (1 - τ)*θ_target"""
+        """Polyak soft update model parameters: θ_target = τ*θ_local + (1 - τ)*θ_target"""
         for target_param, local_param in zip(target_model.parameters(), local_model.parameters()):
             target_param.data.copy_(self.TAU*local_param.data + (1.0-self.TAU)*target_param.data)
 
@@ -246,8 +246,3 @@ class AgentDoubleDQN:
     def set_metrics_tracker(self, metrics_tracker):
         """Set metrics tracker for detailed logging during training"""
         self.metrics_tracker = metrics_tracker
-    
-    def reset(self):
-        """Reset the preprocessor state"""
-        if hasattr(self, 'preprocessor'):
-            self.preprocessor.reset() 

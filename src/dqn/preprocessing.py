@@ -8,7 +8,6 @@ class ImagePreprocessor:
         return self._basic_preprocess(frame)
             
     def _basic_preprocess(self, frame):
-        """Basic preprocessing: grayscale and resize"""
         gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
         resized = cv2.resize(gray, (self.target_size[1], self.target_size[0]), 
                             interpolation=cv2.INTER_AREA)

@@ -42,5 +42,4 @@ class AgentConfig:
         self.target_size = target_size
 
     def dict(self):
-        """Return configuration as dictionary."""
         return self.__dict__

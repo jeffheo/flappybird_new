@@ -27,10 +27,7 @@ class AgentUnified:
         model_dir="../models/DQN_unified.pt",
         feature_extractor='resnet',
         finetune_features=False,
-        use_frame_stack=True,
-        frame_stack_size=4,
         target_size=(224, 224),
-        preprocess_method="enhanced"
     ):
         self.state_size = state_size
         self.action_size = action_size
@@ -40,14 +37,9 @@ class AgentUnified:
         
         self.feature_extractor = feature_extractor
         self.finetune_features = finetune_features
-        self.use_frame_stack = use_frame_stack
-        self.frame_stack_size = frame_stack_size
         self.target_size = target_size
-        self.preprocess_method = preprocess_method
         
-        self.preprocessor = ImagePreprocessor(
-            target_size=target_size,
-        )
+        self.preprocessor = ImagePreprocessor(target_size=target_size)
         
         self.qnetwork_local = QNetworkUnified(
             state_size, 
@@ -231,6 +223,3 @@ class AgentUnified:
     def set_metrics_tracker(self, metrics_tracker):
         self.metrics_tracker = metrics_tracker
         
-    def reset(self):
-        if hasattr(self, 'preprocessor'):
-            self.preprocessor.reset()
