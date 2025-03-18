@@ -1,0 +1,9 @@
+*.ipynb
+*.pyc
+*.pt
+*.out
+*.sh
+*.csv
+*.zip
+/slurm_logs/
+misc

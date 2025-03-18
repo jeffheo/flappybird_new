@@ -1,0 +1,4 @@
+flappy-bird-gym==0.3.0
+matplotlib==3.6.0
+matplotlib-inline==0.1.3
+torch==1.10.0
